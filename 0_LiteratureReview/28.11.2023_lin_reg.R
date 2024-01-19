@@ -1,14 +1,17 @@
 library(tibble)
 library(dplyr)
 library(tidyr)
+library(lubridate)
+library(ggplot2)
+
 
 # Säubern der Umgebung
 remove(list = ls())
 
 # Einladen der Daten
-kiwo <- read.csv("https://raw.githubusercontent.com/opencampus-sh/einfuehrung-in-data-science-und-ml/main/kiwo.csv", header = TRUE, sep = ",", dec = ".")
-wetter <- read.csv("https://raw.githubusercontent.com/opencampus-sh/einfuehrung-in-data-science-und-ml/main/wetter.csv", header = TRUE, sep = ",", dec = ".")
-umsatz <- read.csv("https://raw.githubusercontent.com/opencampus-sh/einfuehrung-in-data-science-und-ml/main/umsatzdaten_gekuerzt.csv", header = TRUE, sep = ",", dec = ".")
+kiwo <- read.csv("C:/Users/anna-/Documents/GitHub/Gruppe1/0_LiteratureReview/kiwo.csv", header = TRUE, sep = ",", dec = ".")
+wetter <- read.csv("C:/Users/anna-/Documents/GitHub/Gruppe1/0_LiteratureReview/wetter.csv", header = TRUE, sep = ",", dec = ".")
+umsatz <- read.csv("C:/Users/anna-/Documents/GitHub/Gruppe1/0_LiteratureReview/umsatzdaten_gekuerzt.csv", header = TRUE, sep = ",", dec = ".")
 
 # Konvertierung von "Datum" zu Date
 kiwo$Datum <- as.Date(kiwo$Datum, format = "%Y-%m-%d")
@@ -19,13 +22,15 @@ umsatz$Datum <- as.Date(umsatz$Datum, format = "%Y-%m-%d")
 alle_warengruppen <- unique(umsatz$Warengruppe)
 platzhalter <- expand.grid(Datum = seq(min(umsatz$Datum), max(umsatz$Datum), by = "1 day"), Warengruppe = alle_warengruppen)
 umsatz_voll <- platzhalter %>%
-  left_join(umsatz, by = c("Datum", "Warengruppe"))
+  left_join(umsatz, by = c("Datum", "Warengruppe"))  %>%
+  mutate(Umsatz = coalesce(Umsatz, 0))
 
 # Zusammenführen der Daten
 daten_tibble <- wetter %>%
   left_join(umsatz_voll, by = "Datum") %>%
   left_join(kiwo, by = "Datum")
 
+# NA zu 0
 daten_tibble <- daten_tibble %>%
   mutate(KielerWoche = ifelse(is.na(KielerWoche), 0, KielerWoche))
 
@@ -37,6 +42,13 @@ daten_tibble <- daten_tibble %>%
 daten_tibble <- daten_tibble %>%
   arrange(Datum, Warengruppe)
 
+#Aufteilung des Datums in Jahr, Woche,Monat und Wochentag
+daten_tibble <- daten_tibble %>%
+  mutate(Woche = week(Datum), Jahr = year(Datum), Monat = month(Datum))
+# neue Spalte Wochentag
+daten_tibble <- daten_tibble %>%
+  mutate(Wochentag = weekdays(Datum))
+
 # Gruppieren nach Datum und Warengruppe
 daten_tibble <- daten_tibble %>%
   group_by(Warengruppe) %>%
@@ -46,8 +58,22 @@ daten_tibble <- daten_tibble %>%
 daten_tibble <- daten_tibble %>%
   ungroup()
 
+# Gruppieren nach Woche, und aufsummieren des Umsatzes pro Woche
+wochenumsatz <- daten_tibble %>%
+  group_by(Woche, Jahr) %>%
+  summarize(Wochenumsatz = sum(Umsatz, na.rm = FALSE)) %>%
+  mutate(Woche = Woche + 1)
+daten_tibble <-  daten_tibble %>%
+  left_join(wochenumsatz, by = c("Woche", "Jahr"))
 
-
+# Gruppieren nach Woche und Warengruppe, und aufsummieren des Umsatzes pro Woche
+wochenumsatz_wg <- daten_tibble %>%
+  group_by(Warengruppe, Woche, Jahr) %>%
+  summarize(Wochenumsatz_wg = sum(Umsatz, na.rm = FALSE)) %>%
+  mutate(Woche = Woche + 1)
+daten_tibble <-  daten_tibble %>%
+  left_join(wochenumsatz_wg, by = c("Warengruppe", "Woche", "Jahr"))
+  
 # Schulferienzeiträume SH
 ferien <- list(
   c(as.Date("2013-07-01"), as.Date("2013-08-03")),
@@ -84,7 +110,7 @@ langer_zeitraum <- seq(as.Date("2013-07-01"), as.Date("2019-12-31"), by = "days"
 # Daten erstellen
 ferien_tibble <- tibble(
   Datum = langer_zeitraum,
-  Ferientage = NA  # Standardmäßig NA setzen
+  Ferientage = 0  # Standardmäßig NA setzen
 )
 
 # markieren der Ferien mit 1
@@ -94,14 +120,11 @@ for (zeitraum in ferien) {
 
 daten_tibble <- left_join(daten_tibble, ferien_tibble, by ="Datum")
 
-# neue Spalte Wochentag
-daten_tibble <- daten_tibble %>%
-  mutate(Wochentag = weekdays(Datum))
-
 # lese weitere csv-Datein zur erwiterung des Datensatzes
-feiertage <- read.csv("C:/Users/anna-/Desktop/KI/Jams/0_DataPreparation/feiertage.csv", header = TRUE, sep = ",", dec = ".")
-wahltage <-  read.csv("C:/Users/anna-/Desktop/KI/Jams/0_DataPreparation/wahltage.csv", header = TRUE, sep = ",", dec = ".")
-wetter_plus <-  read.csv("C:/Users/anna-/Desktop/KI/Jams/0_DataPreparation/wetter_plus.csv", header = TRUE, sep = ";", dec = ".")
+feiertage <- read.csv("C:/Users/anna-/Documents/GitHub/Gruppe1/0_LiteratureReview/feiertage.csv", header = TRUE, sep = ",", dec = ".")
+wahltage <-  read.csv("C:/Users/anna-/Documents/GitHub/Gruppe1/0_LiteratureReview/wahltage.csv", header = TRUE, sep = ",", dec = ".")
+wetter_plus <-  read.csv("C:/Users/anna-/Documents/GitHub/Gruppe1/0_LiteratureReview/wetter_plus.csv", header = TRUE, sep = ";", dec = ".")
+index <-  read.csv("C:/Users/anna-/Documents/GitHub/Gruppe1/0_LiteratureReview/index_backwaren_mit_mehrwertst.csv", header = TRUE, sep = ";", dec = ".")
 
 # Datum umformatieren
 feiertage$Datum <- as.Date(feiertage$Datum, format = "%d.%m.%Y")
@@ -112,12 +135,69 @@ wetter_plus$Datum <- as.Date(wetter_plus$Datum, format = "%d.%m.%Y")
 daten_tibble <- left_join(daten_tibble, feiertage, by ="Datum")
 daten_tibble <- left_join(daten_tibble, wahltage, by ="Datum")
 daten_tibble <- left_join(daten_tibble, wetter_plus, by ="Datum")
+daten_tibble <-  daten_tibble %>%
+  left_join(index, by = c("Monat", "Jahr"))
 
-
-
+# NA in 0 
+daten_tibble <- daten_tibble %>%
+  mutate(Feiertag = ifelse(is.na(Feiertag), 0, Feiertag),
+         Wahl = ifelse(is.na(Wahl), 0, Wahl))
 #
 # Erstellung des linearen Models
 # linearesmodell <- lm(Umsatz ~ as.factor(Warengruppe) + Wettercode, data = daten_tibble)
 # summary(linearesmodell)
+
+
 # Speichern des Tibble als CSV-Datei
-write.csv(daten_tibble$data, file = "C:/Users/anna-/Desktop/KI/Jams/0_DataPreparation/meteolytix.csv", row.names = FALSE)
+write.csv(daten_tibble, file = "C:/Users/anna-/Documents/GitHub/Gruppe1/0_LiteratureReview/meteolytix.csv", row.names = FALSE)
+
+# Durchschnittlichen Umsatz pro Monat 
+durchschnitt_umsatz_monat <- daten_tibble %>%
+  group_by(Monat) %>%
+  summarise(Durchschnitt_Umsatz_Monat = mean(Umsatz, na.rm = TRUE),
+            sd_Durchschnitt_Umsatz_Monat = sd(Umsatz, na.rm = TRUE))
+
+# Balkendiagramm mit Fehlerbalken für den durchschnittlichen Umsatz pro Monat
+ggplot(durchschnitt_umsatz_monat, aes(x = factor(Monat), y = Durchschnitt_Umsatz_Monat)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_errorbar(aes(ymin = Durchschnitt_Umsatz_Monat - sd_Durchschnitt_Umsatz_Monat, 
+                    ymax = Durchschnitt_Umsatz_Monat + sd_Durchschnitt_Umsatz_Monat),
+                width = 0.25) +
+  labs(title = "Durchschnittlicher Umsatz pro Monat",
+       x = "Monat",
+       y = "Durchschnittlicher Monatsumsatz") +
+  theme_minimal()
+
+
+# Umsatz pro Jahr 
+Umsatz_Jahr <- daten_tibble %>%
+  group_by(Jahr) %>%
+  summarise(Umsatz_Jahr = sum(Umsatz, na.rm = TRUE),
+            sd_Umsatz_Jahr = sd(Umsatz, na.rm = TRUE))
+
+# Balkendiagramm mit Fehlerbalken für den durchschnittlichen Umsatz pro Monat erstellen
+ggplot(Umsatz_Jahr, aes(x = factor(Jahr), y = Umsatz_Jahr)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_errorbar(aes(ymin = Umsatz_Jahr - sd_Umsatz_Jahr, 
+                    ymax = Umsatz_Jahr + sd_Umsatz_Jahr),
+                width = 0.25) +
+  labs(title = "Umsatz pro Jahr",
+       x = "Jahr",
+       y = "Jahresumsatz") +
+  theme_minimal()
+
+# Umsatz pro Feiertage
+Umsatz_feiertage <- daten_tibble %>%
+  group_by(Feiertag) %>%
+  summarise(Umsatz_feier = mean(Umsatz, na.rm = TRUE),
+            sd_Umsatz_feier = sd(Umsatz, na.rm = TRUE))
+
+ggplot(Umsatz_feiertage, aes(x = factor(Feiertag), y = Umsatz_feier)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_errorbar(aes(ymin = Umsatz_feier - sd_Umsatz_feier, 
+                    ymax = Umsatz_feier + sd_Umsatz_feier),
+                width = 0.25) +
+  labs(title = "Umsatz pro Feiertag",
+       x = "Feiertag",
+       y = "Umsatz") +
+  theme_minimal()
