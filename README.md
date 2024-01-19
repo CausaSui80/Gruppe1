@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Praxisprojekt: Bäckerei Umsatz Vorhersage Modell
+=======
+# [Praxisprojekt: Bäckerei Umsatz Vorhersage Modell]
+>>>>>>> 914bc50dfadc220c7e77c5dbac59e87253b0537e
 
 ## Repository Link
 
@@ -10,7 +14,7 @@ Deep Learning Projekt in Python zur Vorhersage des Umsatzes einer Bäckerei anha
 
 ### Task Type
 
-[Image Classification / Chatbot / Regression / Clustering / Other]
+[Lineare Regression/ Neuronales Netz]
 
 ### Zusammenfassung der Ergebnisse
 
