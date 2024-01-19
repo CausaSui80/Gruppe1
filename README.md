@@ -1,4 +1,4 @@
-# [Your Project Title Here]
+# [Praxisprojekt: Bäckerei Umsatz Vorhersage Modell]
 
 ## Repository Link
 
@@ -10,7 +10,7 @@
 
 ### Task Type
 
-[Image Classification / Chatbot / Regression / Clustering / Other]
+[Lineare Regression/ Neuronales Netz]
 
 ### Results Summary
 
