@@ -1,24 +1,24 @@
 # Praxisprojekt: Bäckerei Umsatz Vorhersage Modell
 
-## Repository Link
+## Link zu Repository
 
-https://github.com/CausaSui80/Gruppe1)
+https://github.com/CausaSui80/Gruppe1
 
 ## Beschreibung
 
-Deep Learning Projekt in Python zur Vorhersage des Umsatzes einer Bäckerei anhand historischer Daten aus dem Sales-Datensatz von 6 Produkten. Der in diesem Projekt verwendete Verkaufsdatensatz für tägliche Verkäufe erstreckt sich über einen Zeitraum von 6 Jahren von 2013 bis 2018. Der Zweck dieses Projekts ist die Entwicklung eines Vorhersagemodells und die Vorhersage des erwarteten Umsatzes für die Bäckerei zu einem bestimmten Zeitpunkt in der Zukunft. Dieses Projekt beinhaltet eine explorative Analyse und das Modell basiert auf einem neuronalen Feed Forward-Netzwerk. Hinweis: Die Daten für dieses Projekt sind privat und können nicht weitergegeben werden, nur die Ergebnisse werden zur Verfügung gestellt.
+Deep Learning Projekt in RStudio zur Vorhersage des Umsatzes einer Bäckerei anhand historischer Daten aus dem Sales-Datensatz von Meteolytix von 6 Produkten. Der in diesem Projekt verwendete Verkaufsdatensatz für tägliche Verkäufe erstreckt sich über einen Zeitraum von 2013 bis 2019. Der Zweck dieses Projekts ist die Entwicklung eines Vorhersagemodells und die Vorhersage des erwarteten Umsatzes für die Bäckerei zu einem bestimmten Zeitpunkt in der Zukunft. Dieses Projekt beinhaltet eine explorative Analyse und das Modell basiert auf einem neuronalen Netzwerk. Hinweis: Die Daten für dieses Projekt sind privat und können nicht weitergegeben werden, nur die Ergebnisse werden zur Verfügung gestellt.
 
-### Task Type
+### Aufgabenyp
 
 [Lineare Regression/ Neuronales Netz]
 
 ### Zusammenfassung der Ergebnisse
 
-- **Best Model:** [Name of the best-performing model]
-- **Evaluation Metric:** [e.g., Accuracy, F1-Score, MSE]
-- **Result:** [e.g., 95% accuracy, F1-score of 0.8]
+- **Bestes Modell:** [Name of the best-performing model]
+- **Evaluation Metrics:** [e.g., Accuracy, F1-Score, MSE]
+- **Ergebnisse:** [e.g., 95% accuracy, F1-score of 0.8]
 
-## Documentation
+## Dokumentation
 
 1. **[Literature Review](0_LiteratureReview/README.md)**
 2. **[Dataset Characteristics](1_DatasetCharacteristics/exploratory_data_analysis.ipynb)**
