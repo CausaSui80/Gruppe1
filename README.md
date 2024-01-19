@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # Praxisprojekt: Bäckerei Umsatz Vorhersage Modell
-=======
-# [Praxisprojekt: Bäckerei Umsatz Vorhersage Modell]
->>>>>>> 914bc50dfadc220c7e77c5dbac59e87253b0537e
 
 ## Repository Link
 
