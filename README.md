@@ -4,9 +4,14 @@
 
 https://github.com/CausaSui80/Gruppe1
 
+## Namen
+
+1. Anne-Kathrin Wendell
+2. Sandra Schulze
+   
 ## Beschreibung
 
-Deep Learning Projekt in RStudio zur Vorhersage des Umsatzes einer Bäckerei anhand historischer Daten aus dem Sales-Datensatz von Meteolytix von 6 Produkten. Der in diesem Projekt verwendete Verkaufsdatensatz für tägliche Verkäufe erstreckt sich über einen Zeitraum von 2013 bis 2019. Der Zweck dieses Projekts ist die Entwicklung eines Vorhersagemodells und die Vorhersage des erwarteten Umsatzes für die Bäckerei zu einem bestimmten Zeitpunkt in der Zukunft. Dieses Projekt beinhaltet eine explorative Analyse und das Modell basiert auf einem neuronalen Netzwerk. Hinweis: Die Daten für dieses Projekt sind privat und können nicht weitergegeben werden, nur die Ergebnisse werden zur Verfügung gestellt.
+Im Rahmen des Kurses "Einführung in Data Science und maschinelles Lernen" im Wintersemester 2023/24 abschließendes Deep Learning Praxis-Projekt in RStudio zur Vorhersage des Umsatzes einer Bäckerei anhand historischer Daten aus dem Sales-Datensatz von Meteolytix von 6 Produkten. Der in diesem Projekt verwendete Verkaufsdatensatz für tägliche Verkäufe erstreckt sich über einen Zeitraum von 2013 bis 2019. Der Zweck dieses Projekts ist die Entwicklung eines Vorhersagemodells und die Vorhersage des erwarteten Umsatzes für die Bäckerei zu einem bestimmten Zeitpunkt in der Zukunft. Dieses Projekt beinhaltet eine explorative Analyse und das Modell basiert auf einem neuronalen Netzwerk. Hinweis: Die Daten für dieses Projekt sind privat und können nicht weitergegeben werden, nur die Ergebnisse werden zur Verfügung gestellt.
 
 ### Aufgabenyp
 
