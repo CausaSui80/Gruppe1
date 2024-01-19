@@ -1,14 +1,16 @@
-Warengruppe identifies the product categories according to following scheme:
-1: Bread
-2: Rolls
+Warengruppe identifiziert die Produktkategorien nach dem folgenden Schema:
+
+1: Brot
+2: Brötchen
 3: Croissant
-4: Confectionery
-5: Cake
-6: Seasonal Bread
+4: Konditorei
+5: Kuchen
+6: Saisonbrot
 
-Wetter:
+Wettercode:
 
- 	Code	Wettererscheinung oder -zustand
+Code	Wettererscheinung oder -zustand
+
 00	Bewölkungsentwicklung nicht beobachtet
 01	Bewölkung auflösend oder abnehmend
 02	Gleichbleibende Bewölkung
@@ -109,3 +111,7 @@ Wetter:
 97	Starkes Gewitter mit Regen oder Schnee
 98	Starkes Gewitter mit Sandsturm
 99	Starkes Gewitter mit Graupel oder Hagel
+
+Bewölkung:
+
+

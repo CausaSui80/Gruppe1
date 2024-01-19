@@ -1,0 +1,242 @@
+---
+title: "R Notebook - Datenaufbereitung Neuronales Netz"
+output: html_notebook
+author: Sandra Schulze
+---
+
+###################################################
+### Preparation of the Environment ####
+
+# Clear environment
+remove(list = ls())
+
+# Create list with needed libraries
+pkgs <- c("readr", "dplyr", "reticulate", "ggplot2", "Metrics")
+
+# Load each listed library and check if it is installed and install if necessary
+for (pkg in pkgs) {
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    library(pkg, character.only = TRUE)
+  }
+}
+
+
+
+
+###################################################
+### Data Import ####
+
+# Reading the data file
+data <- read_csv("https://raw.githubusercontent.com/opencampus-sh/einfuehrung-in-data-science-und-ml/main/house_pricing_data/house_pricing_train.csv")
+names(data)
+
+
+
+
+###################################################
+### Data Preparation ####
+
+# Preparation of independent variables ('features') by dummy coding the categorical variables
+features <- as_tibble(model.matrix(price ~ as.factor(bathrooms) + as.factor(zipcode) + as.factor(condition) + sqft_living15, data))
+names(features)
+
+# Construction of prepared data set 
+prepared_data <- tibble(label=data$price, features) %>%  # inclusion of the dependent variable ('label')
+    filter(complete.cases(.)) # Handling of missing values (here: only keeping rows without missing values)
+
+
+
+
+###################################################
+### Selection of Training, Validation and Test Data ####
+
+# Set a random seed for reproducibility
+set.seed(42)
+# Shuffle the data
+prepared_data_shuffled <- prepared_data %>% sample_frac(1)
+
+
+# Calculate the number of rows for each dataset
+n_total <- nrow(prepared_data_shuffled)
+n_training <- floor(0.7 * n_total)
+n_validation <- floor(0.20 * n_total)
+
+
+# Split the features and labels for training, validation, and test
+training_features <-
+  prepared_data_shuffled %>% select(-label) %>% slice(1:n_training)
+validation_features <-
+  prepared_data_shuffled %>% select(-label) %>% slice((n_training + 1):(n_training + n_validation))
+test_features <-
+  prepared_data_shuffled %>% select(-label) %>% slice((n_training + n_validation + 1):n_total)
+
+training_labels <-
+  prepared_data_shuffled %>% select(label) %>% slice(1:n_training)
+validation_labels <-
+  prepared_data_shuffled %>% select(label) %>% slice((n_training + 1):(n_training + n_validation))
+test_labels <-
+  prepared_data_shuffled %>% select(label) %>% slice((n_training + n_validation + 1):n_total)
+
+
+# Check the dimensions of the dataframes
+cat("Training features dimensions:", dim(training_features), "\n")
+cat("Validation features dimensions:",
+    dim(validation_features),
+    "\n")
+cat("Test features dimensions:", dim(test_features), "\n")
+cat("\n")
+cat("Training labels dimensions:", dim(training_labels), "\n")
+cat("Validation labels dimensions:", dim(validation_labels), "\n")
+cat("Test labels dimensions:", dim(test_labels), "\n")
+
+###################################################
+### Export of the prepared data ####
+
+# Create subdirectory for the csv files
+subdirectory <- "csv_data"
+dir.create(subdirectory)
+
+# Export of the prepared data to subdirectory
+write_csv(training_features, paste0(subdirectory, "/training_features.csv"))
+write_csv(validation_features, paste0(subdirectory, "/validation_features.csv"))
+write_csv(test_features, paste0(subdirectory, "/test_features.csv"))
+write_csv(training_labels, paste0(subdirectory, "/training_labels.csv"))
+write_csv(validation_labels, paste0(subdirectory, "/validation_labels.csv"))
+write_csv(test_labels, paste0(subdirectory, "/test_labels.csv"))
+
+
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+
+
+### NEURAL NET ESTIMATION WITH DROPOUT
+
+### Aufruf des Skripts zur Datenaufbereitung
+```{r, include=FALSE}
+source("neural-net-data-preparation.R")
+
+```
+
+
+### Definition des Neuronalen Netzes
+```{python}
+# Import needed Python libraries and functions
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import InputLayer, Dense, BatchNormalization, Dropout
+from tensorflow.keras.optimizers import Adam
+
+# The argument "input_shape" for the definition of the input layer must include the number input variables (features) used for the model. To automatically calculate this number, we use the  function `r.training_features.keys()`, which returns the list of variable names of the dataframe `training_features`. Then, the function `len()` returns the length of this list of variable names (i.e. the number of variables in the input).
+
+model = Sequential([
+  InputLayer(input_shape=(len(r.training_features.keys()), )),
+  BatchNormalization(),
+  Dense(10, activation='relu'),
+  Dropout(.2),
+  Dense(4, activation='relu'),
+  Dense(1)
+])
+
+# Ausgabe einer Zusammenfassung zur Form des Modells, das geschaetzt wird (nicht notwendig)
+model.summary()
+
+```
+
+
+### Schätzung des neuronalen Netzes
+```{python}
+
+# Definition der Kosten-(Loss-)Funktion und der Optimierungsfunktion mit seinen Hyperparametern
+model.compile(loss="mse", optimizer=Adam(learning_rate=0.001))
+
+# Schaetzung des Modells
+history = model.fit(r.training_features, r.training_label, epochs=200,
+                    validation_data = (r.validation_features, r.validation_label), verbose=0)
+
+# Ggf. Speichern des geschaetzten Modells
+model.save("python_model.h5")
+
+```
+
+
+### Auswertung der Modelloptimierung
+```{r}
+# Grafische Ausgabe der Modelloptimierung
+
+# create data
+data <- data.frame(val_loss = unlist(py$history$history$val_loss),
+                  loss = unlist(py$history$history$loss))
+
+# Plot
+ggplot(data[-(1:10),]) +
+  geom_line( aes(x=1:length(val_loss), y=val_loss, colour = "Validation Loss" )) +
+  geom_line( aes(x=1:length(loss), y=loss, colour = "Training Loss" )) +
+  scale_colour_manual( values = c("Training Loss"="blue", "Validation Loss"="red") ) +
+  labs(title="Loss Function Values During Optimization") +
+  xlab("Iteration Number") +
+  ylab("Loss") 
+
+
+```
+
+
+### (Ggf.) Laden eines gespeicherten Neuronalen Netzes ###
+```{python}
+model = tf.keras.models.load_model("python_model.h5")
+
+```
+
+
+### Auswertung der Schätzergebnisse ###
+```{r}
+# Schätzung der (normierten) Preise für die Trainings- und Testdaten
+training_predictions <- py$model$predict(training_features)
+validation_predictions <- py$model$predict(validation_features)
+test_predictions <- py$model$predict(test_features)
+
+
+
+# Vergleich der Gütekriterien für die Traingings- und Testdaten
+cat(paste0("MAPE on the Training Data:\t", format(mape(training_label[[1]], training_predictions)*100, digits=3, nsmall=2)))
+cat(paste0("\nMAPE on the Validation Data:\t", format(mape(validation_label[[1]], validation_predictions)*100, digits=3, nsmall=2)))
+
+
+```
+
+```{r}
+
+## Grafischer vergleich der vorhergesagten und der tatsächlichen Preise für die Trainings- und Testdaten
+
+# Zusammenstellung der Daten für die Plots
+data_train <- data.frame(prediction = training_predictions/1000, actual = training_label[[1]]/1000)
+data_test <- data.frame(prediction = validation_predictions/1000, actual = validation_label[[1]]/1000)
+
+# Plot der Ergebnisse der Trainingsdaten
+ggplot(data_train[1:100,]) +
+  geom_line( aes(x=1:length(prediction), y=prediction, colour = "Predicted Values" )) +
+  geom_line( aes(x=1:length(actual), y=actual, colour = "Actual Values" )) +
+  scale_colour_manual( values = c("Predicted Values"="blue", "Actual Values"="red") ) +
+  labs(title="Predicted and Actual Values for the Training Data") +
+  xlab("Case Number") +
+  ylab("Price in 1.000 USD") 
+
+# Plot der Ergebnisse der Validierungsdaten
+ggplot(data_test[1:100,]) +
+  geom_line( aes(x=1:length(prediction), y=prediction, colour = "Predicted Values" )) +
+  geom_line( aes(x=1:length(actual), y=actual, colour = "Actual Values" )) +
+  scale_colour_manual( values = c("Predicted Values"="blue", "Actual Values"="red") ) +
+  labs(title="Predicted and Actual Values for the Test Data") +
+  xlab("Case Number") +
+  ylab("Price in 1.000 USD") 
+
+
+```
+
+```{r}
+# Vorhersage für einen einzelnen Fall
+cat(paste0("Vorhergesagter Preis:\t", round(validation_predictions[100])))
+cat(paste0("\nTatsächlicher Preis:\t", validation_label[[1]][100]))
+
+
+```

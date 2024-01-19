@@ -1,0 +1,202 @@
+---
+title: "R Notebook - Lineare Resgression"
+output: html_notebook
+author: Sandra Schulze
+---
+
+### Einbinden benötigter Bibliotheken:
+
+
+```{r}
+library(readr)
+library(dplyr)
+library(skimr)
+
+# Es wird überprüft ob "devtools" installiert ist; devtools ist ein Package, um Package von GitHub zu installieren
+if (!require(devtools)) install.packages("devtools")
+# Es wird überprüft, ob das Package DataExplorer bereits installiert ist, ansonsten wird es von GitHub installiert
+if (!require(DataExplorer)) devtools::install_github("boxuancui/DataExplorer")
+
+library(DataExplorer)
+
+```
+
+### Importieren des Datensatzes:
+
+```{r}
+library(readr)
+data <- read_csv("wetter.csv")
+```
+
+### Teilen des Datensatzes in Trainings- Validierungs- und Testdatensatz:
+
+```{r}
+
+# Zufallswert für Reproduzierbarkeit setzen
+set.seed(42)
+
+# Daten mischen
+data_shuffled <- data %>% sample_frac(1)
+
+# Anzahl der Zeilen für jeden Datensatz berechne
+n_total <- nrow(data)
+n_train <- floor(0.7 * n_total)
+n_validation <- floor(0.20 * n_total)
+
+# Datensatz in Trainings-, Validierungs- und Testdatensatz aufteilen
+train_data <- data_shuffled %>% slice(1:n_train)
+validation_data <- data_shuffled %>% slice((n_train + 1):(n_train + n_validation))
+test_data <- data_shuffled %>% slice((n_train + n_validation + 1):n_total)
+
+# Check the dimensions of the datasets
+cat("Training dataset dimensions:", dim(train_data), "\n")
+cat("Validation dataset dimensions:", dim(validation_data), "\n")
+cat("Test dataset dimensions:", dim(test_data), "\n")
+
+```
+
+### Lineare Regression:
+
+```{r}
+mod <- lm(Temperatur ~ Datum, train_data)
+  #mod <- lm(Bewoelkung ~ Datum + as.factor(Temperatur), train_data)
+  summary(mod)
+
+```
+
+
+### Angepasstes Modell: Lineare Regression mit Regularisierung:
+
+```{r}
+library(glmnet)
+mod <- glmnet(as.matrix(train_data[c('sqft_lot15', 'condition')]), train_data$price)
+mod
+
+```
+
+
+### Vorhersage mit dem Modell:
+
+
+```{r}
+# Make predictions using the test data
+predicted_values <- predict(mod, newdata = validation_data)
+
+# Compare the predicted values with the actual values
+comparison <- data.frame(Actual = validation_data$Bewoelkung, Predicted = predicted_values)
+
+# Calculate the mean squared error (RMSE)
+rmse <- sqrt(mean((comparison$Actual - comparison$Predicted)^2))
+
+# Display the comparison and RMSE
+head(comparison)
+cat("Root Mean Squared Error (RMSE):", rmse, "\n")
+
+```
+
+
+### MAPE berechnen
+
+```{r}
+
+library(dplyr)
+library(readr)
+library(httr)
+
+# Dataframe for request must include columns `Datum`, `Warengruppe` und `Umsatz`
+predictions <- read_csv("prediction_template.csv")
+
+# name must not be provided; however, each team must upload at least one not
+# anonymous prediction
+name <- "Gruppe X"
+
+# Execution of the request
+r <- POST("https://bakery-sales-mape-tolicqztoq-ey.a.run.app/", 
+          body = list(name=name, predictions=predictions),
+          encode = "json")
+# Output of MAPE in Percent
+content(r, "parsed", "application/json")
+
+```
+
+### Overfitting bei Liniearer Regression
+
+```{r}
+# Importing Function Packages
+library(dplyr)
+library(readr)
+library(lubridate)
+library(broom)
+library(Metrics)
+```
+
+
+```{r}
+# Importing Training and Test Data
+house_pricing_train <- read_csv("./house_pricing_data/house_pricing_train.csv")
+house_pricing_test <- read_csv("./house_pricing_data/house_pricing_test.csv")
+```
+
+
+```{r}
+# Estimating (Training) Models
+mod1 <- lm(price ~ bathrooms, house_pricing_train)
+mod2 <- lm(price ~ as.factor(bathrooms), house_pricing_train)
+mod3 <- lm(price ~ as.factor(bathrooms) + as.factor(zipcode), house_pricing_train)
+mod4 <- lm(price ~ as.factor(bathrooms) + as.factor(zipcode) + condition, house_pricing_train)
+mod5 <- lm(price ~ as.factor(bathrooms) + as.factor(zipcode) + as.factor(condition), house_pricing_train)
+mod6 <- lm(price ~ as.factor(bathrooms) + as.factor(zipcode) + as.factor(condition) + sqft_living15, house_pricing_train)
+mod7 <- lm(price ~ as.factor(bathrooms) + as.factor(zipcode) + as.factor(condition) + sqft_living15 + floors + view + grade + as.factor(zipcode)*as.factor(bathrooms), house_pricing_train)
+```
+
+
+```{r}
+summary(mod1)
+```
+
+```{r}
+glance(mod1)
+```
+
+```{r}
+# Preparation of Model Results
+rbind(glance(mod1), glance(mod2), glance(mod3), glance(mod4), glance(mod5), glance(mod6), glance(mod7))
+```
+
+
+```{r}
+# Model Prediction Quality for the Training Data Using the Mean Absolute Error
+rbind(mae(house_pricing_train$price, predict(mod1)),
+      mae(house_pricing_train$price, predict(mod2)),
+      mae(house_pricing_train$price, predict(mod3)),
+      mae(house_pricing_train$price, predict(mod4)),
+      mae(house_pricing_train$price, predict(mod5)),
+      mae(house_pricing_train$price, predict(mod6)),
+      mae(house_pricing_train$price, predict(mod7)))
+```
+
+
+```{r}
+# Model Prediction Quality for the Training Data Using the Mean Absolute Percentage Error
+rbind(mape(house_pricing_train$price, predict(mod1)),
+      mape(house_pricing_train$price, predict(mod2)),
+      mape(house_pricing_train$price, predict(mod3)),
+      mape(house_pricing_train$price, predict(mod4)),
+      mape(house_pricing_train$price, predict(mod5)),
+      mape(house_pricing_train$price, predict(mod6)),
+      mape(house_pricing_train$price, predict(mod7)))
+```
+
+
+```{r}
+# Model Prediction Quality for the (Unknown) Test Data Using the Mean Absolute Percentage Error
+rbind(mape(house_pricing_test$price, predict(mod1, newdata=house_pricing_test)),
+      mape(house_pricing_test$price, predict(mod2, newdata=house_pricing_test)),
+      mape(house_pricing_test$price, predict(mod3, newdata=house_pricing_test)),
+      mape(house_pricing_test$price, predict(mod4, newdata=house_pricing_test)),
+      mape(house_pricing_test$price, predict(mod5, newdata=house_pricing_test)),
+      mape(house_pricing_test$price, predict(mod6, newdata=house_pricing_test)),
+      mape(house_pricing_test$price, predict(mod7, newdata=house_pricing_test)))
+
+
+```
